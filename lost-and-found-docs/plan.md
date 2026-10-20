@@ -123,9 +123,20 @@ Dokumen ini memuat rencana kerja operasional 5 fase, pembagian tugas harian untu
 
 ---
 
-## 2. Matriks Tanggung Jawab Tim (RACI Matrix)
+## 2. Profil Anggota Kelompok & Matriks Tanggung Jawab (RACI)
 
-| Modul / Aktivitas | Anggota 1 (Infra Lead) | Anggota 2 (Backend Dev) | Anggota 3 (LB & Proxy) | Anggota 4 (FE & DB) | Anggota 5 (QA & Docs) |
+### A. Daftar Anggota & Peran Resmi
+1. **Attala Alif Ramadhani Tri Hida (NIM: 230441100144)** — *Ketua Kelompok & Cloud Infrastructure Lead*
+2. **Naufal Husain (NIM: 240441100038)** — *Backend & Containerization Specialist*
+3. **Muhammad Naufal Widiatmoko (NIM: 230441100125)** — *Load Balancer & Reverse Proxy Engineer*
+4. **Tanji (NIM: 230441100045)** — *Database & Frontend Deployment Specialist*
+5. **Moh. Yoga Dwi Prasetyo (NIM: 240441100133)** — *QA, Stress Testing & Technical Documentation Lead*
+
+---
+
+### B. Matriks Tanggung Jawab (RACI Matrix)
+
+| Modul / Aktivitas | Attala (Infra Lead) | Naufal H. (Backend) | M. Naufal W. (LB) | Tanji (FE & DB) | Moh. Yoga (QA & Docs) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | Setup VirtualBox & 3 VM Ubuntu Server | **R / A** | I | C | I | I |
 | Konfigurasi Host-Only Network & Static IP | **R / A** | C | C | I | I |

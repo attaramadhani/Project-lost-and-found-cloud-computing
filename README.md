@@ -64,9 +64,12 @@ npm run dev
 
 ---
 
-## 👥 Tim Pengembang (5 Anggota)
-* **Anggota 1 (Ketua / User):** Cloud Infrastructure & Network Lead (Setup VirtualBox & 3 VM)
-* **Anggota 2:** Backend & Containerization Specialist (Dockerizing API & Multi-Instance)
-* **Anggota 3:** Load Balancer & Reverse Proxy Engineer (Nginx Load Balancer di VM 2)
-* **Anggota 4:** Database & Frontend Deployment Specialist (MySQL Container di VM 3 & Frontend Nginx di VM 1)
-* **Anggota 5:** QA, Stress Testing & Documentation Lead (Pengujian Failover, Laporan & Live Demo)
+## 👥 Tim Pengembang & Pembagian Tugas (Kelompok CC)
+
+| No | Nama Lengkap | NIM | Peran (Role) | Tanggung Jawab Utama |
+|:--:|:---|:---:|:---|:---|
+| **1** | **Attala Alif Ramadhani Tri Hida** | **230441100144** | **Ketua Kelompok & Cloud Infrastructure Lead** | • Setup Hypervisor VirtualBox di laptop host MSI.<br>• Konfigurasi Virtual Network (Host-Only `192.168.56.0/24`).<br>• Provisioning 3 VM Ubuntu Server (Master & Cloning).<br>• Konfigurasi static IP & firewall antar-VM. |
+| **2** | **Naufal Husain** | **240441100038** | **Backend & Containerization Specialist** | • Mempersiapkan REST API Express.js & endpoint `/api/health`.<br>• Dockerizing API menggunakan `Dockerfile`.<br>• Menjalankan 2 instance Backend Container (`backend-1` & `backend-2`) via Docker Compose di VM 2.<br>• Integrasi penanda `served_by` untuk bukti load balancing. |
+| **3** | **Muhammad Naufal Widiatmoko** | **230441100125** | **Load Balancer & Reverse Proxy Engineer** | • Instalasi & konfigurasi Nginx Load Balancer di VM 2 (Port 80).<br>• Implementasi algoritma Round-Robin ke port 5001 & 5002.<br>• Konfigurasi header CORS dan routing lalu lintas API. |
+| **4** | **Tanji** | **230441100045** | **Database & Frontend Deployment Specialist** | • Deployment container Docker MySQL 8 di VM 3 dengan Persistent Volume.<br>• Import skema basis data & data awal (`init.sql`).<br>• Build Frontend React SPA (`npm run build`) & hosting via Nginx di VM 1. |
+| **5** | **Moh. Yoga Dwi Prasetyo** | **240441100133** | **QA, Stress Testing & Documentation Lead** | • Pengujian fungsional end-to-end CRUD dari browser host.<br>• Pengujian Load Balancing (Round-Robin curl loop).<br>• Pengujian Failover Chaos Test (simulasi mematikan kontainer 1 di VM 2).<br>• Mengumpulkan bukti screenshot, menyusun Laporan Akhir & Slide Presentasi. |
