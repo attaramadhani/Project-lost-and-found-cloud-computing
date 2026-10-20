@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Instance Backend #1
   backend-1:

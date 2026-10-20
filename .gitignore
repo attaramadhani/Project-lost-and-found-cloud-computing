@@ -4,6 +4,7 @@ package-lock.json
 
 # Build outputs
 dist/
+!frontend/dist/
 build/
 
 # Environment variables

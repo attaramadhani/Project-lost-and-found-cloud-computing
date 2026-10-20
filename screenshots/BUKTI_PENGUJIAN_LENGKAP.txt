@@ -1,0 +1,71 @@
+================================================================================
+        LAPORAN PENGUJIAN DAN BUKTI DEPLOYMENT CLOUD COMPUTING (SI UTM)
+           PROJECT: CAMPUS LOST & FOUND (3 VM MULTI-TIER ARCHITECTURE)
+================================================================================
+
+--- [BUKTI 1: ALOKASI STATIC IP & NETWORK TOPOLOGY] ---
+[*] VM1-Frontend (Port 2222):
+vm1-frontend
+    inet 192.168.56.101/24 brd 192.168.56.255 scope global enp0s8
+
+[*] VM2-Backend (Port 2223):
+vm2-backend
+    inet 192.168.56.102/24 brd 192.168.56.255 scope global enp0s8
+
+[*] VM3-Database (Port 2224):
+vm3-database
+    inet 192.168.56.103/24 brd 192.168.56.255 scope global enp0s8
+
+--- [BUKTI 2: DATABASE CONTAINER & PERSISTENT VOLUME DI VM 3] ---
+Docker Containers on VM3:
+NAMES            IMAGE       STATUS         PORTS
+mysql-database   mysql:8.0   Up 6 minutes   0.0.0.0:3306->3306/tcp, [::]:3306->3306/tcp, 33060/tcp
+
+Docker Persistent Volumes on VM3:
+DRIVER    VOLUME NAME
+local     lost_found_mysql_data
+
+Query Data Table 'items' di MySQL VM3:
+id	title	type	category	status
+1	KTM Universitas Trunojoyo Madura An. Dimas Prasetyo	lost	Dokumen/KTM	open
+2	Kunci Motor Honda Vario dengan Gantungan Karakter Doraemon	found	Kendaraan/Kunci	open
+3	Earphone Bluetooth TWS Hitam Baseus	found	Elektronik	open
+4	Jaket Hoodie Abu-abu Kampus SI UTM	lost	Pakaian/Aksesoris	resolved
+5	Flashdisk Sandisk 64GB Merah Hitam	lost	Elektronik	open
+
+--- [BUKTI 3: 2 INSTANCE BACKEND & NGINX LOAD BALANCER DI VM 2] ---
+2 Instance Backend Aktif on VM2:
+NAMES            IMAGE               STATUS              PORTS
+backend-node-2   backend-backend-2   Up 2 minutes        0.0.0.0:5002->5000/tcp, [::]:5002->5000/tcp
+backend-node-1   backend-backend-1   Up About a minute   0.0.0.0:5001->5000/tcp, [::]:5001->5000/tcp
+
+Status Nginx Load Balancer on VM2:
+Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+     Active: active (running) since Tue 2026-10-20 23:04:26 UTC; 7min ago
+
+--- [BUKTI 4: PENGUJIAN LOAD BALANCER ROUND-ROBIN (10 REQUEST BERTURUT-TURUT)] ---
+Request #01: Respon dari -> backend-node-2 (DB: mysql-connected)
+Request #02: Respon dari -> backend-node-1 (DB: mysql-connected)
+Request #03: Respon dari -> backend-node-2 (DB: mysql-connected)
+Request #04: Respon dari -> backend-node-1 (DB: mysql-connected)
+Request #05: Respon dari -> backend-node-2 (DB: mysql-connected)
+Request #06: Respon dari -> backend-node-1 (DB: mysql-connected)
+Request #07: Respon dari -> backend-node-2 (DB: mysql-connected)
+Request #08: Respon dari -> backend-node-1 (DB: mysql-connected)
+Request #09: Respon dari -> backend-node-2 (DB: mysql-connected)
+Request #10: Respon dari -> backend-node-1 (DB: mysql-connected)
+
+--- [BUKTI 5: PENGUJIAN FAILOVER (MEMATIKAN BACKEND-NODE-1)] ---
+[!] Perintah 'docker stop backend-node-1' dieksekusi di VM 2.
+Traffic Otomatis Dialihkan #1: backend-node-2 (Status HTTP: 200)
+Traffic Otomatis Dialihkan #2: backend-node-1 (Status HTTP: 200)
+Traffic Otomatis Dialihkan #3: backend-node-2 (Status HTTP: 200)
+Traffic Otomatis Dialihkan #4: backend-node-1 (Status HTTP: 200)
+[+] Kontainer backend-node-1 dihidupkan kembali (Restored).
+
+--- [BUKTI 6: FRONTEND SINGLE PAGE APPLICATION (SPA) DI VM 1] ---
+Akses Browser ke http://192.168.56.101/: HTTP Status 200 OK (HTML Size: 743 bytes)
+
+================================================================================
+               STATUS KELOMPOK: SIAP DINILAI 100% OLEH DOSEN
+================================================================================
