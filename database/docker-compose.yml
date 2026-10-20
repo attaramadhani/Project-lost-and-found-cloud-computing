@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rahasia123
+      MYSQL_DATABASE: lost_found_db
+    ports:
+      - "3306:3306"
+    volumes:
+      # Persistent storage volume agar data tidak hilang saat container restart
+      - mysql_storage:/var/lib/mysql
+      # Auto-init script tabel saat pertama kali dijalankan
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  mysql_storage:
+    name: lost_found_mysql_data
