@@ -245,4 +245,26 @@ CC PAK FIRMAN/
     ├── src/                # Komponen antarmuka React + Tailwind
     ├── nginx.conf          # Konfigurasi Nginx untuk static SPA hosting
     └── package.json        # Dependensi React, Vite, Lucide
+└── screenshots/            # Bukti dokumentasi resmi (Sesuai Rubrik Slide CC-01)
+    ├── 01_Arsitektur_dan_Ketentuan/
+    ├── 02_VM1_Frontend_SPA/
+    ├── 03_VM2_Backend_Cluster_LoadBalancer/
+    ├── 04_VM3_Database_Persistent_Storage/
+    ├── 05_Pengujian_LoadBalancing_dan_Failover/
+    └── 06_Arsip_Instalasi_VirtualBox/
+
+---
+
+## 📸 Panduan Bukti Dokumentasi & Laporan Akhir
+
+Seluruh tangkapan layar telah ditata ke dalam 6 subfolder di `screenshots/` sesuai bab laporan:
+* **01_Arsitektur_dan_Ketentuan:** Slide resmi ketentuan tugas dari dosen, Diagram Arsitektur 3-Tier, dan Diagram Topologi Multi-VM VirtualBox.
+* **02_VM1_Frontend_SPA:** Alamat IP statis VM 1 (`192.168.56.101`), status Nginx web server port 80, file bundle build SPA production, dan tampilan browser nyata portal Lost & Found (Beranda, formulir pelaporan, dan filter status).
+* **03_VM2_Backend_Cluster_LoadBalancer:** Alamat IP statis VM 2 (`192.168.56.102`), konfigurasi minimal 2 instance container backend, status `docker ps` (`backend-node-1` & `backend-node-2` berjalan aktif), dan konfigurasi Nginx Load Balancer upstream.
+* **04_VM3_Database_Persistent_Storage:** Alamat IP statis VM 3 (`192.168.56.103`), container MySQL 8.0 port 3306, bukti fisik Docker Named Volume `lost_found_mysql_data`, dan hasil query data barang dari database.
+* **05_Pengujian_LoadBalancing_dan_Failover:** Hasil uji ping konektivitas seluruh VM, uji distribusi beban Round-Robin (bergantian 50:50), uji ketahanan Failover saat salah satu node dimatikan paksa (0 downtime), dan uji pemulihan layanan.
+* **06_Arsip_Instalasi_VirtualBox:** Rekam jejak langkah awal wizard instalasi Ubuntu Server di VirtualBox.
+
+Detail pemetaan gambar ke Bab Laporan dapat dilihat langsung pada berkas [**`screenshots/README.md`**](screenshots/README.md).
+
 ```
