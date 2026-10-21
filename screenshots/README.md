@@ -19,7 +19,8 @@ screenshots/
 │   ├── 02_vm1_webserver_nginx_status.png
 │   ├── 03_vm1_file_build_production_spa.png
 │   ├── 04_browser_portal_lost_and_found_home.png
-│   └── 05_browser_portal_lost_and_found_filter.png
+│   ├── 05_browser_form_lapor_barang_baru.png
+│   └── 06_browser_filter_barang_ditemukan.png
 ├── 03_VM2_Backend_Cluster_LoadBalancer/
 │   ├── 01_vm2_ip_statis_enp0s8.png
 │   ├── 02_vm2_docker_compose_config.png

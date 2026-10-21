@@ -12,13 +12,16 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Read URL query params for easy direct linking & screenshots
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+
   // Filters
-  const [activeType, setActiveType] = useState('all');
-  const [category, setCategory] = useState('');
-  const [search, setSearch] = useState('');
+  const [activeType, setActiveType] = useState(params.get('type') || 'all');
+  const [category, setCategory] = useState(params.get('category') || '');
+  const [search, setSearch] = useState(params.get('search') || '');
 
   // Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(params.get('modal') === 'true');
 
   // Cloud Inspector Metadata
   const [serverMeta, setServerMeta] = useState(null);
