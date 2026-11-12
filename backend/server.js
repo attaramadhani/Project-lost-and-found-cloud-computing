@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const INSTANCE_NAME = process.env.APP_INSTANCE || `backend-${os.hostname()}`;
+const INSTANCE_NAME = process.env.APP_INSTANCE || process.env.NODE_NAME || `backend-${os.hostname()}`;
 
 // Middleware
 app.use(cors());

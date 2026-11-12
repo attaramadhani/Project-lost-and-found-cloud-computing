@@ -36,7 +36,7 @@ Sistem dirancang mengimplementasikan konsep arsitektur cloud terdistribusi (*dec
 │  ┌────────────────────────┐ ┌──────────────────────────────────┐ ┌───────────────────┐ │
 │  │ VM 1: FRONT-END        │ │ VM 2: BACK-END CLUSTER           │ │ VM 3: DATABASE    │ │
 │  │ IP: 192.168.56.101     │ │ IP: 192.168.56.102               │ │ IP: 192.168.56.103│ │
-│  │ RAM: 1.0 GB            │ │ RAM: 1.5 GB                      │ │ RAM: 1.0 GB       │ │
+│  │ RAM: 1.5 GB            │ │ RAM: 2.0 GB                      │ │ RAM: 1.5 GB       │ │
 │  │                        │ │                                  │ │                   │ │
 │  │ Web Server (Nginx)     │ │ Nginx Load Balancer (Port 80)    │ │ Docker MySQL 8    │ │
 │  │ Serving React SPA      │ │ (Algoritma Round-Robin + Failover│ │ (Port 3306)       │ │
@@ -121,14 +121,15 @@ Agar masing-masing anggota paham apa yang harus dipelajari dan dikerjakan, berik
 * **Berkas yang Dipelajari:**
   * `backend/nginx-lb.conf`:
     ```nginx
-    upstream backend_cluster {
-        server 127.0.0.1:5001 max_fails=2 fail_timeout=10s;
-        server 127.0.0.1:5002 max_fails=2 fail_timeout=10s;
+    upstream backend_servers {
+        server 127.0.0.1:5001 max_fails=2 fail_timeout=5s;
+        server 127.0.0.1:5002 max_fails=2 fail_timeout=5s;
     }
     server {
-        listen 80;
-        location /api/ {
-            proxy_pass http://backend_cluster;
+        listen 80 default_server;
+        location / {
+            proxy_pass http://backend_servers;
+            proxy_connect_timeout 2s;
             proxy_next_upstream error timeout http_500 http_502 http_503;
         }
     }

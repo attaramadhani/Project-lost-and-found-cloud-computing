@@ -40,18 +40,18 @@ Karena kita menggunakan **Ubuntu Server 22.04 (versi teks tanpa desktop GUI)**, 
 ```
 [ Total RAM Fisik Laptop: 16.0 GB ]
  ├── Windows 11 Host OS : ~4.5 GB
- ├── VM 1 (Frontend SPA):  1.0 GB  (IP: 192.168.56.101)
- ├── VM 2 (Backend + LB):  1.5 GB  (IP: 192.168.56.102)
- ├── VM 3 (Database DB) :  1.0 GB  (IP: 192.168.56.103)
- └── SISA FREE RAM      : ~8.0 GB  (Laptop tetap sangat dingin & lancar)
+ ├── VM 1 (Frontend SPA):  1.5 GB  (IP: 192.168.56.101)
+ ├── VM 2 (Backend + LB):  2.0 GB  (IP: 192.168.56.102)
+ ├── VM 3 (Database DB) :  1.5 GB  (IP: 192.168.56.103)
+ └── SISA FREE RAM      : ~6.5 GB  (Laptop tetap sangat dingin & lancar)
 ```
 
 | Virtual Machine | Alokasi vCPU | Alokasi RAM | Pemakaian RAM Riil | Penyimpanan VDI |
 | :--- | :---: | :---: | :---: | :---: |
-| **VM 1: Frontend Server** | 1 Core | 1024 MB | ~150 MB (Nginx + OS) | ~6 GB |
-| **VM 2: Backend Cluster** | 2 Core | 1536 MB | ~280 MB (2x Node.js + Nginx + OS) | ~8 GB |
-| **VM 3: Database Server** | 1 Core | 1024 MB | ~450 MB (MySQL + OS) | ~8 GB |
-| **TOTAL UNTUK 3 VM** | **4 Core** | **3.5 GB** | **~880 MB riil** | **~22 GB** |
+| **VM 1: Frontend Server** | 1 Core | 1536 MB (1.5 GB) | ~150 MB (Nginx + OS) | ~6 GB |
+| **VM 2: Backend Cluster** | 2 Core | 2048 MB (2.0 GB) | ~280 MB (2x Node.js + Nginx + OS) | ~8 GB |
+| **VM 3: Database Server** | 1 Core | 1536 MB (1.5 GB) | ~450 MB (MySQL + OS) | ~8 GB |
+| **TOTAL UNTUK 3 VM** | **4 Core** | **5.0 GB** | **~880 MB riil** | **~22 GB** |
 
 ---
 

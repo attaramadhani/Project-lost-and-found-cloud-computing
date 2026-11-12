@@ -4,6 +4,7 @@ dotenv.config();
 
 let pool = null;
 let useFallback = false;
+let retryTimer = null;
 
 // In-Memory fallback store for seamless local testing without running MySQL
 let inMemoryItems = [
@@ -123,11 +124,26 @@ async function initDatabase() {
 
     conn.release();
     useFallback = false;
+    if (retryTimer) {
+      clearInterval(retryTimer);
+      retryTimer = null;
+    }
   } catch (err) {
     console.warn(`[DB] Notice: MySQL not accessible (${err.message}).`);
     console.warn('[DB] Operating in in-memory mode for local development/testing.');
     console.warn('[DB] In production (VM 3 Docker MySQL), it will connect via DB_HOST in .env.');
     useFallback = true;
+    if (pool) {
+      pool.end().catch(() => {});
+      pool = null;
+    }
+    if (process.env.DB_HOST && !retryTimer) {
+      retryTimer = setInterval(() => {
+        console.log(`[DB] Retrying connection to MySQL at ${host}:${port}...`);
+        initDatabase();
+      }, 5000);
+      if (retryTimer.unref) retryTimer.unref();
+    }
   }
 }
 

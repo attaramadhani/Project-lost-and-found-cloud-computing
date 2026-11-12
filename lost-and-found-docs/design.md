@@ -23,7 +23,7 @@ Seluruh sistem berjalan di atas laptop fisik (Host) dengan **16 GB RAM** menggun
 │  ┌───────────────────────┐ ┌───────────────────────┐ ┌───────────────┐ │
 │  │ VM 1: FRONT-END       │ │ VM 2: BACK-END        │ │ VM 3: DATABASE│ │
 │  │ IP: 192.168.56.101    │ │ IP: 192.168.56.102    │ │ IP: .56.103   │ │
-│  │ RAM: 1.0 GB           │ │ RAM: 1.5 GB           │ │ RAM: 1.0 GB   │ │
+│  │ RAM: 1.5 GB           │ │ RAM: 2.0 GB           │ │ RAM: 1.5 GB   │ │
 │  │ OS: Ubuntu Server     │ │ OS: Ubuntu Server     │ │ OS: Ubuntu Srv│ │
 │  │                       │ │                       │ │               │ │
 │  │ Web Server (Nginx)    │ │ Nginx Load Balancer   │ │ Docker MySQL 8│ │
@@ -52,9 +52,9 @@ Jaringan virtual dikonfigurasi menggunakan mode **Host-Only Adapter (`vboxnet0` 
 | Node / Mesin | Role | IP Address Virtual | Alokasi Resource | Layanan yang Berjalan |
 | :--- | :--- | :--- | :--- | :--- |
 | **Host Machine** | Windows 11 (MSI Laptop) | `192.168.56.1` | - | Web Browser (Client) & SSH Terminal |
-| **VM 1** | Front-end Server | `192.168.56.101` | 1 vCPU, 1024 MB RAM | Nginx (serving React SPA build) |
-| **VM 2** | Back-end Cluster | `192.168.56.102` | 2 vCPU, 1536 MB RAM | Nginx Load Balancer + 2x Container Docker Backend |
-| **VM 3** | Database Server | `192.168.56.103` | 1 vCPU, 1024 MB RAM | Container Docker MySQL 8 (Persistent Volume) |
+| **VM 1** | Front-end Server | `192.168.56.101` | 1 vCPU, 1536 MB (1.5 GB) RAM | Nginx (serving React SPA build) |
+| **VM 2** | Back-end Cluster | `192.168.56.102` | 2 vCPU, 2048 MB (2.0 GB) RAM | Nginx Load Balancer + 2x Container Docker Backend |
+| **VM 3** | Database Server | `192.168.56.103` | 1 vCPU, 1536 MB (1.5 GB) RAM | Container Docker MySQL 8 (Persistent Volume) |
 
 ### Aturan Keamanan Jaringan (Firewall / UFW Rules):
 1. **VM 1 (Frontend):** Buka port `80` (HTTP) dan port `22` (SSH).
