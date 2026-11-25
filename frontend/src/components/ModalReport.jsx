@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Send } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Check, AlertCircle } from 'lucide-react';
 
 const CATEGORIES = [
   'Dokumen/KTM',
@@ -9,112 +9,176 @@ const CATEGORIES = [
   'Lain-lain'
 ];
 
+const INITIAL_FORM = () => ({
+  title: '',
+  type: 'lost',
+  category: 'Dokumen/KTM',
+  description: '',
+  location: '',
+  date_event: new Date().toISOString().split('T')[0],
+  contact_name: '',
+  contact_phone: ''
+});
+
 export default function ModalReport({ isOpen, onClose, onSubmit }) {
-  const [formData, setFormData] = useState({
-    title: '',
-    type: 'lost',
-    category: 'Dokumen/KTM',
-    description: '',
-    location: '',
-    date_event: new Date().toISOString().split('T')[0],
-    contact_name: '',
-    contact_phone: ''
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const titleInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSubmitError(null);
+    const timer = setTimeout(() => {
+      titleInputRef.current?.focus();
+    }, 30);
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape' && !submitting) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose, submitting]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setSubmitError(null);
     try {
       await onSubmit(formData);
+      setFormData(INITIAL_FORM());
       onClose();
-      // Reset
-      setFormData({
-        title: '',
-        type: 'lost',
-        category: 'Dokumen/KTM',
-        description: '',
-        location: '',
-        date_event: new Date().toISOString().split('T')[0],
-        contact_name: '',
-        contact_phone: ''
-      });
     } catch (err) {
-      alert('Gagal membuat laporan: ' + err.message);
+      setSubmitError(err.message || 'Gagal mengirim laporan ke server.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !submitting) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-report-title"
+        className="relative bg-paper-surface dark:bg-night-surface border border-paper-border dark:border-night-border rounded-md max-w-lg w-full p-5 sm:p-6 my-8"
+      >
+        <div className="flex items-start justify-between gap-3 pb-3 border-b border-paper-divider dark:border-night-divider mb-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Buat Laporan Baru</h2>
-            <p className="text-xs text-slate-500">Laporkan barang hilang atau barang yang Anda temukan</p>
+            <h2
+              id="modal-report-title"
+              className="font-display text-xl font-bold text-paper-ink dark:text-night-ink"
+            >
+              Buat Laporan Barang
+            </h2>
+            <p className="text-xs text-paper-slate dark:text-night-slate mt-0.5">
+              Isi detail barang yang hilang atau Anda temukan di area kampus.
+            </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+            disabled={submitting}
+            aria-label="Tutup dialog laporan"
+            className="min-h-[44px] min-w-[44px] -mt-2 -mr-2 inline-flex items-center justify-center rounded-md text-paper-slate dark:text-night-slate hover:text-paper-ink dark:hover:text-night-ink hover:bg-paper-stone dark:hover:bg-night-elevated transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Tipe Laporan (Hilang vs Ditemukan) */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, type: 'lost' })}
-              className={`py-2 px-3 text-xs font-semibold rounded-xl border text-center transition-all ${
-                formData.type === 'lost'
-                  ? 'bg-rose-50 border-rose-300 text-rose-700 ring-2 ring-rose-500/20'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              🔍 Saya Kehilangan Barang
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, type: 'found' })}
-              className={`py-2 px-3 text-xs font-semibold rounded-xl border text-center transition-all ${
-                formData.type === 'found'
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700 ring-2 ring-emerald-500/20'
-                  : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              🎁 Saya Menemukan Barang
-            </button>
+        {submitError && (
+          <div
+            role="alert"
+            className="mb-4 p-3 rounded-md bg-red-50 dark:bg-red-950 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 text-xs flex items-start gap-2"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>{submitError}</span>
           </div>
+        )}
 
-          {/* Judul Barang */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Report Type */}
+          <fieldset>
+            <legend className="block text-xs font-semibold text-paper-ink dark:text-night-ink mb-1.5">
+              Jenis Laporan
+            </legend>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                aria-pressed={formData.type === 'lost'}
+                onClick={() => setFormData({ ...formData, type: 'lost' })}
+                className={`min-h-[44px] px-3 py-2 text-xs sm:text-sm font-semibold rounded-md border inline-flex items-center justify-center gap-1.5 transition-colors ${
+                  formData.type === 'lost'
+                    ? 'bg-red-50 dark:bg-red-950 border-red-700 dark:border-red-400 text-red-700 dark:text-red-300'
+                    : 'bg-paper-bg dark:bg-night-bg border-paper-border dark:border-night-border text-paper-slate dark:text-night-slate hover:text-paper-ink dark:hover:text-night-ink'
+                }`}
+              >
+                {formData.type === 'lost' && <Check className="w-4 h-4" aria-hidden="true" />}
+                <span>Barang Hilang</span>
+              </button>
+
+              <button
+                type="button"
+                aria-pressed={formData.type === 'found'}
+                onClick={() => setFormData({ ...formData, type: 'found' })}
+                className={`min-h-[44px] px-3 py-2 text-xs sm:text-sm font-semibold rounded-md border inline-flex items-center justify-center gap-1.5 transition-colors ${
+                  formData.type === 'found'
+                    ? 'bg-green-50 dark:bg-green-950 border-green-700 dark:border-green-400 text-green-700 dark:text-green-300'
+                    : 'bg-paper-bg dark:bg-night-bg border-paper-border dark:border-night-border text-paper-slate dark:text-night-slate hover:text-paper-ink dark:hover:text-night-ink'
+                }`}
+              >
+                {formData.type === 'found' && <Check className="w-4 h-4" aria-hidden="true" />}
+                <span>Barang Ditemukan</span>
+              </button>
+            </div>
+          </fieldset>
+
+          {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Nama / Judul Barang *
+            <label
+              htmlFor="report-title"
+              className="block text-xs font-semibold text-paper-ink dark:text-night-ink mb-1"
+            >
+              Nama / Judul Barang <span aria-hidden="true">*</span>
             </label>
             <input
+              ref={titleInputRef}
+              id="report-title"
               type="text"
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Contoh: KTM An. Dimas Prasetyo, Kunci Vario Hitam..."
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
+              placeholder="Contoh: KTM An. Dimas Prasetyo, Kunci Vario Hitam"
+              className="w-full min-h-[44px] px-3 py-2 text-sm bg-paper-surface dark:bg-night-bg border border-paper-border dark:border-night-border rounded-md text-paper-ink dark:text-night-ink placeholder:text-paper-slate dark:placeholder:text-night-slate"
             />
           </div>
 
-          {/* Kategori & Tanggal */}
+          {/* Category & Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Kategori</label>
+              <label
+                htmlFor="report-category"
+                className="block text-xs font-semibold text-paper-ink dark:text-night-ink mb-1"
+              >
+                Kategori
+              </label>
               <select
+                id="report-category"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none bg-white"
+                className="w-full min-h-[44px] px-3 py-2 text-sm bg-paper-surface dark:bg-night-bg border border-paper-border dark:border-night-border rounded-md text-paper-ink dark:text-night-ink"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -125,76 +189,107 @@ export default function ModalReport({ isOpen, onClose, onSubmit }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Perkiraan Tanggal</label>
+              <label
+                htmlFor="report-date"
+                className="block text-xs font-semibold text-paper-ink dark:text-night-ink mb-1"
+              >
+                Perkiraan Tanggal <span aria-hidden="true">*</span>
+              </label>
               <input
+                id="report-date"
                 type="date"
                 required
                 value={formData.date_event}
                 onChange={(e) => setFormData({ ...formData, date_event: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
+                className="w-full min-h-[44px] px-3 py-2 text-sm bg-paper-surface dark:bg-night-bg border border-paper-border dark:border-night-border rounded-md text-paper-ink dark:text-night-ink"
               />
             </div>
           </div>
 
-          {/* Lokasi */}
+          {/* Location */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Lokasi Kejadian *</label>
+            <label
+              htmlFor="report-location"
+              className="block text-xs font-semibold text-paper-ink dark:text-night-ink mb-1"
+            >
+              Lokasi Kejadian <span aria-hidden="true">*</span>
+            </label>
             <input
+              id="report-location"
               type="text"
               required
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder="Contoh: Parkiran Fakultas Teknik, Gazebo Perpustakaan..."
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
+              placeholder="Contoh: Parkiran Fakultas Teknik, Gazebo Perpustakaan"
+              className="w-full min-h-[44px] px-3 py-2 text-sm bg-paper-surface dark:bg-night-bg border border-paper-border dark:border-night-border rounded-md text-paper-ink dark:text-night-ink placeholder:text-paper-slate dark:placeholder:text-night-slate"
             />
           </div>
 
-          {/* Deskripsi */}
+          {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Deskripsi & Ciri-ciri *</label>
+            <label
+              htmlFor="report-description"
+              className="block text-xs font-semibold text-paper-ink dark:text-night-ink mb-1"
+            >
+              Deskripsi &amp; Ciri Fisik <span aria-hidden="true">*</span>
+            </label>
             <textarea
+              id="report-description"
               required
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Tuliskan warna, stiker, isi dompet, atau detail unik lainnya..."
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
+              placeholder="Tuliskan warna, merek, stiker, atau ciri khusus lainnya..."
+              className="w-full px-3 py-2 text-sm bg-paper-surface dark:bg-night-bg border border-paper-border dark:border-night-border rounded-md text-paper-ink dark:text-night-ink placeholder:text-paper-slate dark:placeholder:text-night-slate"
             />
           </div>
 
-          {/* Kontak Pelapor */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Contact */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Anda *</label>
+              <label
+                htmlFor="report-contact-name"
+                className="block text-xs font-semibold text-paper-ink dark:text-night-ink mb-1"
+              >
+                Nama Pelapor <span aria-hidden="true">*</span>
+              </label>
               <input
+                id="report-contact-name"
                 type="text"
                 required
                 value={formData.contact_name}
                 onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                placeholder="Nama lengkap/panggilan"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
+                placeholder="Nama lengkap atau panggilan"
+                className="w-full min-h-[44px] px-3 py-2 text-sm bg-paper-surface dark:bg-night-bg border border-paper-border dark:border-night-border rounded-md text-paper-ink dark:text-night-ink placeholder:text-paper-slate dark:placeholder:text-night-slate"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">No. WhatsApp *</label>
+              <label
+                htmlFor="report-contact-phone"
+                className="block text-xs font-semibold text-paper-ink dark:text-night-ink mb-1"
+              >
+                Nomor WhatsApp <span aria-hidden="true">*</span>
+              </label>
               <input
+                id="report-contact-phone"
                 type="tel"
                 required
                 value={formData.contact_phone}
                 onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                placeholder="Contoh: 08123456789"
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none"
+                placeholder="Contoh: 081234567890"
+                className="w-full min-h-[44px] px-3 py-2 text-sm bg-paper-surface dark:bg-night-bg border border-paper-border dark:border-night-border rounded-md text-paper-ink dark:text-night-ink placeholder:text-paper-slate dark:placeholder:text-night-slate"
               />
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
+          {/* Submit Row */}
+          <div className="pt-4 flex flex-wrap justify-end gap-2.5 border-t border-paper-divider dark:border-night-divider">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              disabled={submitting}
+              className="min-h-[44px] px-4 py-2 text-sm font-semibold text-paper-ink dark:text-night-ink bg-paper-stone dark:bg-night-elevated hover:bg-paper-divider dark:hover:bg-night-divider border border-paper-border dark:border-night-border rounded-md transition-colors"
             >
               Batal
             </button>
@@ -202,10 +297,9 @@ export default function ModalReport({ isOpen, onClose, onSubmit }) {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex items-center gap-1.5 px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all disabled:opacity-50"
+              className="min-h-[44px] px-5 py-2 bg-cobalt hover:bg-cobalt-hover text-white text-sm font-semibold rounded-md transition-colors disabled:opacity-50"
             >
-              <Send className="w-3.5 h-3.5" />
-              <span>{submitting ? 'Menyimpan...' : 'Kirim Laporan'}</span>
+              {submitting ? 'Menyimpan Laporan...' : 'Kirim Laporan'}
             </button>
           </div>
         </form>

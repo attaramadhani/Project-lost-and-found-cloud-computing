@@ -1,36 +1,90 @@
 import React from 'react';
-import { Compass, PlusCircle, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw, Sun, Moon } from 'lucide-react';
 
-export default function Navbar({ onOpenModal, onRefresh, loading }) {
+export default function Navbar({ onOpenModal, onRefresh, loading, theme, onToggleTheme }) {
+  const isDark = theme === 'dark';
+
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
-            <Compass className="w-6 h-6 animate-pulse" />
+    <header className="sticky top-0 z-30 bg-paper-surface dark:bg-night-surface border-b border-paper-divider dark:border-night-divider">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Custom 3-Tier geometric identity mark representing Presentation / App / Data tiers */}
+          <div className="w-10 h-10 shrink-0 rounded-md bg-paper-ink dark:bg-night-elevated border border-paper-divider dark:border-night-divider flex items-center justify-center">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              className="text-white"
+            >
+              <rect x="3" y="4" width="18" height="4" rx="1" fill="currentColor" opacity="0.7" />
+              <rect x="3" y="10" width="18" height="4" rx="1" fill="#60A5FA" />
+              <rect x="3" y="16" width="18" height="4" rx="1" fill="currentColor" opacity="0.7" />
+            </svg>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 leading-tight">Campus Lost & Found</h1>
-            <p className="text-xs text-slate-500 hidden sm:block">Cloud Computing Architecture Demo • SI UTM</p>
+          <div className="min-w-0">
+            <p className="font-display text-base sm:text-lg font-bold tracking-tight text-paper-ink dark:text-night-ink leading-tight truncate">
+              Campus Lost &amp; Found
+            </p>
+            <p className="text-xs text-paper-slate dark:text-night-slate hidden sm:block">
+              SI UTM · Portal Barang Kampus
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <nav aria-label="Navigasi utama" className="hidden md:flex items-center gap-1">
+          <a
+            href="#daftar-laporan"
+            className="min-h-[44px] px-3 inline-flex items-center text-sm font-medium text-paper-slate dark:text-night-slate hover:text-paper-ink dark:hover:text-night-ink hover:bg-paper-stone dark:hover:bg-night-elevated rounded-md transition-colors"
+          >
+            Daftar Laporan
+          </a>
+          <a
+            href="#cloud-inspector"
+            className="min-h-[44px] px-3 inline-flex items-center text-sm font-medium text-paper-slate dark:text-night-slate hover:text-paper-ink dark:hover:text-night-ink hover:bg-paper-stone dark:hover:bg-night-elevated rounded-md transition-colors"
+          >
+            Monitor Node
+          </a>
+        </nav>
+
+        <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-pressed={isDark}
+            aria-label={isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+            title={isDark ? 'Mode Terang' : 'Mode Gelap'}
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md border border-paper-border dark:border-night-border text-paper-ink dark:text-night-ink bg-paper-surface dark:bg-night-elevated hover:bg-paper-stone dark:hover:bg-night-divider transition-colors"
+          >
+            {isDark ? (
+              <Sun className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <Moon className="w-4 h-4" aria-hidden="true" />
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={onRefresh}
             disabled={loading}
-            title="Refresh Data"
-            className="p-2 text-slate-600 hover:text-sky-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+            aria-label="Muat ulang daftar laporan"
+            title="Muat ulang data"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md border border-paper-border dark:border-night-border text-paper-ink dark:text-night-ink bg-paper-surface dark:bg-night-elevated hover:bg-paper-stone dark:hover:bg-night-divider transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin text-sky-600' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${loading ? 'motion-safe:animate-spin text-cobalt dark:text-cobalt-light' : ''}`}
+              aria-hidden="true"
+            />
           </button>
-          
+
           <button
+            type="button"
             onClick={onOpenModal}
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white text-sm font-medium rounded-xl shadow-sm transition-all hover:shadow-md"
+            className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 bg-cobalt hover:bg-cobalt-hover active:bg-blue-900 text-white text-sm font-semibold rounded-md transition-colors"
           >
-            <PlusCircle className="w-4 h-4" />
-            <span>Lapor Barang</span>
+            <Plus className="w-4 h-4" aria-hidden="true" />
+            <span>Buat Laporan</span>
           </button>
         </div>
       </div>

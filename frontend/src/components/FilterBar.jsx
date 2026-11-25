@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 const CATEGORIES = [
   'Semua Kategori',
@@ -27,26 +27,45 @@ export default function FilterBar({
   ];
 
   return (
-    <div className="space-y-4 mb-6">
-      {/* Search and Category Filter */}
+    <section aria-label="Filter dan pencarian laporan" className="space-y-4 mb-6">
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="relative flex-1 min-w-0">
+          <label htmlFor="search-items" className="sr-only">
+            Cari nama barang, deskripsi, atau lokasi
+          </label>
+          <Search
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-paper-slate dark:text-night-slate pointer-events-none"
+            aria-hidden="true"
+          />
           <input
+            id="search-items"
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama barang, deskripsi, atau lokasi (contoh: KTM, Vario, RKB)..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+            placeholder="Cari nama barang, ciri, atau lokasi (mis. KTM, Vario, RKB)..."
+            className="w-full min-h-[44px] pl-10 pr-11 py-2 bg-paper-surface dark:bg-night-surface border border-paper-border dark:border-night-border rounded-md text-sm text-paper-ink dark:text-night-ink placeholder:text-paper-slate dark:placeholder:text-night-slate"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Bersihkan kata kunci pencarian"
+              className="absolute right-0.5 top-1/2 -translate-y-1/2 min-h-[40px] min-w-[40px] inline-flex items-center justify-center text-paper-slate dark:text-night-slate hover:text-paper-ink dark:hover:text-night-ink rounded-md"
+            >
+              <X className="w-4 h-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
 
-        <div className="relative sm:w-64">
-          <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        <div className="sm:w-64">
+          <label htmlFor="category-filter" className="sr-only">
+            Filter berdasarkan kategori barang
+          </label>
           <select
+            id="category-filter"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm text-slate-700 cursor-pointer"
+            className="w-full min-h-[44px] px-3.5 py-2 bg-paper-surface dark:bg-night-surface border border-paper-border dark:border-night-border rounded-md text-sm text-paper-ink dark:text-night-ink"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c === 'Semua Kategori' ? '' : c}>
@@ -57,19 +76,21 @@ export default function FilterBar({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-        <div className="flex space-x-2 overflow-x-auto no-scrollbar">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 border-b border-paper-divider dark:border-night-divider pb-1 sm:pb-0">
+        <div role="tablist" aria-label="Status laporan" className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2">
           {tabs.map((tab) => {
             const isActive = activeType === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
                 onClick={() => setActiveType(tab.id)}
-                className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`min-h-[44px] px-3 py-2 text-sm text-left sm:text-center whitespace-nowrap border-b-2 transition-colors ${
                   isActive
-                    ? 'bg-sky-50 text-sky-700 font-semibold border border-sky-200/60 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    ? 'border-cobalt dark:border-cobalt-light text-cobalt dark:text-cobalt-light font-semibold'
+                    : 'border-transparent text-paper-slate dark:text-night-slate hover:text-paper-ink dark:hover:text-night-ink font-medium'
                 }`}
               >
                 {tab.label}
@@ -78,10 +99,10 @@ export default function FilterBar({
           })}
         </div>
 
-        <span className="text-xs text-slate-400 font-medium pl-3 whitespace-nowrap">
-          {totalCount} laporan
-        </span>
+        <p className="text-xs font-mono text-paper-slate dark:text-night-slate py-1.5 sm:py-2 whitespace-nowrap">
+          {totalCount} laporan ditampilkan
+        </p>
       </div>
-    </div>
+    </section>
   );
 }

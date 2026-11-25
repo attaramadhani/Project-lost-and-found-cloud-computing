@@ -1,12 +1,15 @@
-import React from 'react';
-import { MapPin, Calendar, Phone, CheckCircle, Trash2, ArrowUpRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Calendar, Phone, Check, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
-export default function ItemCard({ item, onResolve, onDelete }) {
+export default function ItemCard({ item, onResolve, onDelete, featured = false }) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [busyAction, setBusyAction] = useState(null);
+
   const isLost = item.type === 'lost';
   const isResolved = item.status === 'resolved';
 
   const formatWaNumber = (phone) => {
-    let clean = phone.replace(/[^0-9]/g, '');
+    let clean = String(phone || '').replace(/[^0-9]/g, '');
     if (clean.startsWith('0')) {
       clean = '62' + clean.slice(1);
     }
@@ -14,103 +17,188 @@ export default function ItemCard({ item, onResolve, onDelete }) {
   };
 
   const waLink = `https://wa.me/${formatWaNumber(item.contact_phone)}?text=${encodeURIComponent(
-    `Halo ${item.contact_name}, saya melihat informasi terkait "${item.title}" di portal Campus Lost & Found...`
+    `Halo ${item.contact_name}, saya melihat informasi terkait "${item.title}" di portal Campus Lost & Found.`
   )}`;
 
+  const formattedDate = new Date(item.date_event).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+
+  const handleResolveClick = async () => {
+    setBusyAction('resolve');
+    try {
+      await onResolve(item.id);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    setBusyAction('delete');
+    try {
+      await onDelete(item.id);
+    } finally {
+      setBusyAction(null);
+      setConfirmingDelete(false);
+    }
+  };
+
+  const statusBadge = isResolved ? (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-semibold bg-paper-stone dark:bg-night-elevated text-paper-ink dark:text-night-ink border border-paper-divider dark:border-night-divider">
+      <Check className="w-3.5 h-3.5" aria-hidden="true" />
+      <span>Selesai</span>
+    </span>
+  ) : isLost ? (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-semibold bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800">
+      <AlertCircle className="w-3.5 h-3.5" aria-hidden="true" />
+      <span>Hilang</span>
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-semibold bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-800">
+      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+      <span>Ditemukan</span>
+    </span>
+  );
+
   return (
-    <div
-      className={`bg-white rounded-2xl border transition-all p-5 flex flex-col justify-between shadow-sm hover:shadow-md ${
+    <article
+      className={`border rounded-md p-5 flex flex-col justify-between ${
+        featured ? 'md:col-span-2 lg:col-span-2' : ''
+      } ${
         isResolved
-          ? 'border-slate-200 opacity-75 bg-slate-50/50'
-          : isLost
-          ? 'border-rose-100 hover:border-rose-300'
-          : 'border-emerald-100 hover:border-emerald-300'
+          ? 'bg-paper-stone/60 dark:bg-night-bg border-paper-divider dark:border-night-divider'
+          : 'bg-paper-surface dark:bg-night-surface border-paper-border/70 dark:border-night-border'
       }`}
     >
-      <div>
-        {/* Top Badges */}
-        <div className="flex items-center justify-between mb-3 gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                isResolved
-                  ? 'bg-slate-200 text-slate-700'
-                  : isLost
-                  ? 'bg-rose-100 text-rose-700'
-                  : 'bg-emerald-100 text-emerald-700'
-              }`}
-            >
-              {isResolved ? 'Selesai' : isLost ? 'Hilang' : 'Ditemukan'}
-            </span>
+      <div className={featured ? 'grid grid-cols-1 lg:grid-cols-12 gap-5' : ''}>
+        <div className={featured ? 'lg:col-span-7' : ''}>
+          {/* Header Row: Status + Category + Delete */}
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              {statusBadge}
+              <span className="text-xs font-mono px-2.5 py-1 rounded-sm bg-paper-bg dark:bg-night-bg text-paper-slate dark:text-night-slate border border-paper-divider dark:border-night-divider">
+                {item.category}
+              </span>
+              {featured && (
+                <span className="text-xs font-semibold text-cobalt dark:text-cobalt-light">
+                  Laporan Terbaru
+                </span>
+              )}
+            </div>
 
-            <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
-              {item.category}
-            </span>
+            {!confirmingDelete && (
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(true)}
+                aria-label={`Hapus laporan ${item.title}`}
+                title="Hapus laporan"
+                className="min-h-[44px] min-w-[44px] -mt-2 -mr-2 inline-flex items-center justify-center rounded-md text-paper-slate dark:text-night-slate hover:text-red-700 dark:hover:text-red-300 hover:bg-paper-stone dark:hover:bg-night-elevated transition-colors"
+              >
+                <Trash2 className="w-4 h-4" aria-hidden="true" />
+              </button>
+            )}
           </div>
 
-          <button
-            onClick={() => onDelete(item.id)}
-            title="Hapus laporan"
-            className="text-slate-400 hover:text-rose-600 p-1 rounded-lg transition-colors"
+          {/* Title & Description */}
+          <h3
+            className={`font-display text-base sm:text-lg font-bold leading-snug mb-2 ${
+              isResolved
+                ? 'line-through text-paper-slate dark:text-night-slate'
+                : 'text-paper-ink dark:text-night-ink'
+            }`}
           >
-            <Trash2 className="w-4 h-4" />
-          </button>
+            {item.title}
+          </h3>
+          <p className={`text-sm text-paper-slate dark:text-night-slate leading-relaxed mb-4 ${featured ? '' : 'line-clamp-3'}`}>
+            {item.description}
+          </p>
         </div>
 
-        {/* Title & Description */}
-        <h3 className={`font-bold text-base text-slate-900 mb-2 leading-snug ${isResolved ? 'line-through text-slate-500' : ''}`}>
-          {item.title}
-        </h3>
-        <p className="text-sm text-slate-600 mb-4 line-clamp-3 leading-relaxed">
-          {item.description}
-        </p>
-
-        {/* Meta Info */}
-        <div className="space-y-1.5 text-xs text-slate-500 mb-4">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span className="truncate font-medium text-slate-700">{item.location}</span>
+        {/* Metadata */}
+        <div
+          className={`space-y-2 text-xs text-paper-slate dark:text-night-slate ${
+            featured
+              ? 'lg:col-span-5 lg:border-l lg:border-paper-divider lg:dark:border-night-divider lg:pl-5 flex flex-col justify-center'
+              : 'mb-4'
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-paper-ink dark:text-night-ink" aria-hidden="true" />
+            <span className="font-semibold text-paper-ink dark:text-night-ink break-words">{item.location}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>Kejadian: {new Date(item.date_event).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            <Calendar className="w-4 h-4 shrink-0 text-paper-slate dark:text-night-slate" aria-hidden="true" />
+            <span>Kejadian: {formattedDate}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>Kontak: {item.contact_name} ({item.contact_phone})</span>
+          <div className="flex items-start gap-2">
+            <Phone className="w-4 h-4 shrink-0 mt-0.5 text-paper-slate dark:text-night-slate" aria-hidden="true" />
+            <span className="break-words">
+              {item.contact_name} (<span className="font-mono">{item.contact_phone}</span>)
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
-        {!isResolved ? (
-          <>
+      {/* Inline Delete Confirmation or Primary Actions */}
+      <div className="pt-4 mt-4 border-t border-paper-divider dark:border-night-divider">
+        {confirmingDelete ? (
+          <div
+            role="region"
+            aria-label="Konfirmasi penghapusan laporan"
+            className="flex flex-wrap items-center justify-between gap-2 bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 rounded-md p-2.5"
+          >
+            <span className="text-xs font-semibold text-red-700 dark:text-red-300">
+              Hapus laporan ini?
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                disabled={busyAction === 'delete'}
+                className="min-h-[44px] px-3 py-1.5 text-xs font-semibold rounded-md bg-paper-surface dark:bg-night-elevated text-paper-ink dark:text-night-ink border border-paper-border dark:border-night-border hover:bg-paper-stone dark:hover:bg-night-divider transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={busyAction === 'delete'}
+                className="min-h-[44px] px-3 py-1.5 text-xs font-semibold rounded-md bg-red-700 hover:bg-red-800 text-white transition-colors disabled:opacity-50"
+              >
+                {busyAction === 'delete' ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        ) : !isResolved ? (
+          <div className="flex flex-wrap items-center gap-2">
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm"
+              className="flex-1 min-h-[44px] inline-flex items-center justify-center px-4 py-2 bg-cobalt hover:bg-cobalt-hover text-white text-xs sm:text-sm font-semibold rounded-md transition-colors text-center"
             >
-              <span>Hubungi via WA</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              Hubungi via WhatsApp
             </a>
 
             <button
-              onClick={() => onResolve(item.id)}
-              className="inline-flex items-center gap-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl transition-colors"
-              title="Tandai sudah selesai / kembali"
+              type="button"
+              onClick={handleResolveClick}
+              disabled={busyAction === 'resolve'}
+              className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-paper-stone dark:bg-night-elevated hover:bg-paper-divider dark:hover:bg-night-divider text-paper-ink dark:text-night-ink border border-paper-border dark:border-night-border text-xs sm:text-sm font-medium rounded-md transition-colors disabled:opacity-50"
             >
-              <CheckCircle className="w-3.5 h-3.5 text-slate-500" />
-              <span>Selesai</span>
+              <Check className="w-4 h-4" aria-hidden="true" />
+              <span>{busyAction === 'resolve' ? 'Menyimpan...' : 'Tandai Selesai'}</span>
             </button>
-          </>
+          </div>
         ) : (
-          <div className="w-full text-center py-1.5 text-xs text-emerald-700 font-medium bg-emerald-50 rounded-xl">
-            ✓ Barang telah dikembalikan
+          <div className="min-h-[44px] flex items-center justify-center gap-2 text-xs font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950 border border-green-300 dark:border-green-800 rounded-md px-3 py-2">
+            <Check className="w-4 h-4" aria-hidden="true" />
+            <span>Barang telah dikembalikan</span>
           </div>
         )}
       </div>
-    </div>
+    </article>
   );
 }
