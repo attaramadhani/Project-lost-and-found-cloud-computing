@@ -1,271 +1,205 @@
-# 🌐 Campus Lost & Found — Cloud Computing Project
+# Campus Lost & Found: Cloud Computing Project
 
-> **Proyek Final Mata Kuliah Cloud Computing**  
-> Program Studi Sistem Informasi — Fakultas Teknik — Universitas Trunojoyo Madura  
-> Dosen Pengampu: **Firmansyah Adiputra**
+Proyek Final Mata Kuliah Cloud Computing  
+Program Studi Sistem Informasi, Fakultas Teknik, Universitas Trunojoyo Madura  
+Dosen Pengampu: **Firmansyah Adiputra, S.T., M.Sc.**
 
 ---
 
-## 👥 Tim Pengembang & Pembagian Tugas Resmi
+## Tim Pengembang & Pembagian Tugas
 
-Sesuai ketentuan evaluasi tugas (*"setiap anggota harus memiliki kontribusi yang jelas"*), berikut adalah pembagian peran, tanggung jawab, dan berkas yang dikelola oleh masing-masing anggota:
+Sesuai ketentuan evaluasi tugas agar setiap anggota berkontribusi pada lapisan sistem yang jelas, tim membagi peran, tanggung jawab, dan berkas sebagai berikut:
 
-| No | Nama Lengkap | NIM | Peran (Role) | Fokus Tugas Utama | Berkas yang Dikelola |
+| No | Nama Lengkap | NIM | Peran | Fokus Tugas Utama | Berkas yang Dikelola |
 |:--:|:---|:---:|:---|:---|:---|
-| **1** | **Attala Alif Ramadhani Tri Hida** | **230441100144** | **Ketua Kelompok & Cloud Infrastructure Lead** | Setup Hypervisor VirtualBox di host laptop, konfigurasi Host-Only Network, provisioning 3 VM Ubuntu Server, IP statis & firewall. | `lost-and-found-docs/design.md`, `lost-and-found-docs/tech-stack.md` |
-| **2** | **Naufal Husain** | **240441100038** | **Backend & Containerization Specialist** | REST API Express.js, Dockerfile backend, setup **minimal 2 instance container backend** (`backend-1` & `backend-2`) via Docker Compose di VM 2. | `backend/server.js`, `backend/Dockerfile`, `backend/docker-compose.yml` |
-| **3** | **Muhammad Naufal Widiatmoko** | **230441100125** | **Load Balancer & Reverse Proxy Engineer** | Setup Nginx Load Balancer di VM 2 (Port 80), konfigurasi `upstream` Round-Robin, failover timeout, dan header CORS. | `backend/nginx-lb.conf` |
-| **4** | **Tanji** | **230441100045** | **Database & Frontend Deployment Specialist** | Setup container MySQL 8 dengan Persistent Volume di VM 3, import `init.sql`, build SPA React (`npm run build`), & setup Nginx di VM 1. | `database/init.sql`, `database/docker-compose.yml`, `frontend/nginx.conf` |
-| **5** | **Moh. Yoga Dwi Prasetyo** | **240441100133** | **QA, Stress Testing & Documentation Lead** | Pengujian fungsional CRUD, uji load balancing cURL loop, uji failover (mematikan kontainer), dokumentasi screenshot, & laporan akhir. | `lost-and-found-docs/features.md`, `lost-and-found-docs/plan.md`, Laporan Word |
+| 1 | Attala Alif Ramadhani Tri Hida | 230441100144 | Ketua Kelompok & Cloud Infrastructure Lead | Setup hypervisor VirtualBox di laptop host, konfigurasi Host-Only Network, pembuatan 3 VM Ubuntu Server, IP statis, dan pembukaan/penutupan presentasi | `lost-and-found-docs/design.md`, `lost-and-found-docs/tech-stack.md`, `PANDUAN_TEKNIS_TAHAP_1_DAN_6_*` |
+| 2 | Tanji | 230441100045 | Database & Frontend Deployment Specialist | Setup container MySQL 8 dengan persistent volume di VM3, impor `init.sql`, build SPA React (`npm run build`), dan setup Nginx di VM1 | `database/init.sql`, `database/docker-compose.yml`, `frontend/nginx.conf`, `PANDUAN_TEKNIS_TAHAP_2_*` |
+| 3 | Naufal Husain | 240441100038 | Backend & Containerization Specialist | REST API Express.js, Dockerfile backend, dan orkestrasi minimal 2 container backend (`backend-node-1` dan `backend-node-2`) via Docker Compose di VM2 | `backend/server.js`, `backend/Dockerfile`, `backend/docker-compose.yml`, `PANDUAN_TEKNIS_TAHAP_3_*` |
+| 4 | Muhammad Naufal Widiatmoko | 230441100125 | Load Balancer & Reverse Proxy Engineer | Setup Nginx Load Balancer di VM2 (port 80), konfigurasi `upstream` Round-Robin, parameter failover, dan pencegahan header CORS ganda | `backend/nginx-lb.conf`, `PANDUAN_TEKNIS_TAHAP_4_*` |
+| 5 | Moh. Yoga Dwi Prasetyo | 240441100133 | QA, Testing & Documentation Lead | Pengujian fungsional CRUD, uji load balancing, uji chaos failover, pengumpulan bukti tangkapan layar, laporan akhir Word, dan presentasi | `lost-and-found-docs/features.md`, `lost-and-found-docs/plan.md`, `LAPORAN_FINAL_PROJECT_CLOUD_COMPUTING.docx`, `PRESENTASI_FINAL_PROJECT_CLOUD_COMPUTING.pptx` |
 
 ---
 
-## 🏗️ Topologi Arsitektur VirtualBox Multi-VM (Type-2 Hypervisor)
+## Topologi Arsitektur VirtualBox Multi-VM (Type-2 Hypervisor)
 
-Sistem dirancang mengimplementasikan konsep arsitektur cloud terdistribusi (*decoupling*) pada subnet lokal **`192.168.56.0/24`** yang berjalan 100% mandiri di atas laptop fisik (Host):
+Tim menerapkan arsitektur terdistribusi 3-tier di atas subnet privat **`192.168.56.0/24`** menggunakan Oracle VM VirtualBox pada satu laptop host Windows 11 (16 GB RAM):
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ PHYSICAL HOST: Laptop MSI (Intel Core i7-13620H, 16 GB RAM, Windows 11)                │
-│                                                                                        │
-│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
-│  │ HYPERVISOR: Oracle VM VirtualBox (Host-Only Adapter: 192.168.56.1)               │  │
-│  └───────────────────┬──────────────────────────┬──────────────────────────┬────────┘  │
-│                      │                          │                          │           │
-│                      ▼                          ▼                          ▼           │
-│  ┌────────────────────────┐ ┌──────────────────────────────────┐ ┌───────────────────┐ │
-│  │ VM 1: FRONT-END        │ │ VM 2: BACK-END CLUSTER           │ │ VM 3: DATABASE    │ │
-│  │ IP: 192.168.56.101     │ │ IP: 192.168.56.102               │ │ IP: 192.168.56.103│ │
-│  │ RAM: 1.5 GB            │ │ RAM: 2.0 GB                      │ │ RAM: 1.5 GB       │ │
-│  │                        │ │                                  │ │                   │ │
-│  │ Web Server (Nginx)     │ │ Nginx Load Balancer (Port 80)    │ │ Docker MySQL 8    │ │
-│  │ Serving React SPA      │ │ (Algoritma Round-Robin + Failover│ │ (Port 3306)       │ │
-│  │ (Folder /var/www/html) │ │            │            │        │ │                   │ │
-│  │                        │ │   ┌────────┴────────┐   │        │ │ Persistent Volume:│ │
-│  │                        │ │   ▼                 ▼   │        │ │ /var/lib/mysql    │ │
-│  │                        │ │ Container 1   Container 2        │ │ (Data Anti Hilang)│ │
-│  │                        │ │ (Port 5001)   (Port 5002)        │ │                   │ │
-│  └────────────────────────┘ └───────────┬──────────────────────┘ └─────────▲─────────┘ │
-│                      ▲                  │                                  │           │
-│                      │                  └────────── Query SQL ─────────────┘           │
-│                      │ Request API (/api/*)                                            │
-│                      └─────────────────────────────────────────────────────────────────┘
-└────────────────────────────────────────▲───────────────────────────────────────────────┘
-                                         │ Buka Browser Host: http://192.168.56.101
+```text
++----------------------------------------------------------------------------------------+
+| PHYSICAL HOST: Laptop Windows 11 (16 GB RAM)                                           |
+|                                                                                        |
+|  +----------------------------------------------------------------------------------+  |
+|  | HYPERVISOR (Type-2): Oracle VM VirtualBox (Host-Only Gateway: 192.168.56.1)      |  |
+|  +-------------------+--------------------------+--------------------------+--------+  |
+|                      |                          |                          |           |
+|                      v                          v                          v           |
+|  +------------------------+ +----------------------------------+ +-------------------+ |
+|  | VM 1: FRONTEND         | | VM 2: BACKEND CLUSTER            | | VM 3: DATABASE    | |
+|  | IP: 192.168.56.101     | | IP: 192.168.56.102               | | IP: 192.168.56.103| |
+|  | RAM: 1.5 GB (1 vCPU)   | | RAM: 2.0 GB (2 vCPU)             | | RAM: 1.5 GB       | |
+|  |                        | |                                  | |                   | |
+|  | Nginx Web Server (:80) | | Nginx Load Balancer (:80)        | | Docker MySQL 8    | |
+|  | Serving React SPA      | | (Round-Robin + Failover)         | | (Port 3306)       | |
+|  | (/var/www/html)        | |           |            |         | |                   | |
+|  |                        | |   +-------+--------+   |         | | Named Volume:     | |
+|  |                        | |   v                v   v         | | /var/lib/mysql    | |
+|  |                        | | node-1 (:5001)  node-2 (:5002)   | | (Data Persisten)  | |
+|  +------------------------+ +-----------+----------------------+ +---------+---------+ |
+|                      ^                  |                                  |           |
+|                      |                  +----------- Query SQL ------------+           |
+|                      | Request REST API (/api/*)                                       |
+|                      +-----------------------------------------------------------------+
++----------------------------------------^-----------------------------------------------+
+                                         | Buka Browser Host: http://192.168.56.101
                            [ Pengguna / Dosen Penguji ]
 ```
 
 ---
 
-## 📖 Panduan Detail Pelaksanaan Tugas Per Anggota
+## Ringkasan Antarmuka Aplikasi (Frontend SPA)
 
-Agar masing-masing anggota paham apa yang harus dipelajari dan dikerjakan, berikut panduan operasional langkah demi langkah:
+Antarmuka web di `frontend/` dibangun dengan **React 18, Vite 5, dan Tailwind CSS 3** menggunakan desain **Swiss Campus Ledger**:
 
----
-
-### 👤 1. Attala Alif Ramadhani Tri Hida (Ketua & Infra Lead)
-* **Konsep Dasar:** Virtualisasi server menggunakan Hypervisor Type-2 (VirtualBox) untuk membagi resource fisik CPU dan RAM laptop menjadi beberapa mesin virtual (VM) terisolasi.
-* **Tanggung Jawab:**
-  1. Menginstal Oracle VM VirtualBox di laptop Windows.
-  2. Mengaktifkan **Host-Only Network Adapter** dengan IP Gateway `192.168.56.1` netmask `255.255.255.0`.
-  3. Menginstal sistem operasi **Ubuntu Server 22.04 LTS** pada `VM1-Frontend`.
-  4. Memanfaatkan fitur **Clone VirtualBox** untuk menduplikasi VM1 menjadi `VM2-Backend` dan `VM3-Database` dalam hitungan menit.
-  5. Mengatur IP Statis di ketiga VM (`.101`, `.102`, `.103`) dan menguji `ping` antar-VM.
-* **Bukti Screenshot untuk Laporan:**
-  * Dashboard VirtualBox yang memperlihatkan ketiga VM berstatus *Running*.
-  * Konfigurasi VirtualBox Network Tools (Host-Only Ethernet Adapter).
-  * Output perintah `ip a` di masing-masing VM dan hasil `ping` antar-VM.
+- **Masthead & Ringkasan Real-Time:** Menampilkan judul portal dan ringkasan langsung jumlah laporan `Hilang`, `Ditemukan`, dan `Selesai` dari hasil API.
+- **Pencarian & Filter Instan:** Filter tab status (`Semua Laporan`, `Barang Hilang`, `Barang Ditemukan`, `Selesai`), dropdown kategori, serta pencarian teks tanpa reload halaman.
+- **Kartu Laporan & Konfirmasi Inline:** Kartu aktif terbaru tampil lebih lebar pada desktop, dilengkapi tombol `Hubungi via WhatsApp`, tombol `Tandai Selesai`, serta konfirmasi hapus inline (`Hapus laporan ini?`).
+- **Modal Pelaporan Aksesibel:** Dialog `Buat Laporan Barang` mendukung penutupan dengan tombol `Escape`, label terikat pada setiap input, serta pesan error di dalam form.
+- **Mode Terang & Mode Gelap:** Tombol pengalih tema di header mengubah tampilan secara langsung dan menyimpan pilihan di browser.
+- **Monitor Node & Load Balancer:** Panel footer menampilkan container backend yang melayani (`served_by`), hostname, status koneksi MySQL VM3, tombol `Tes Ping Load Balancer`, dan riwayat ping pada sesi berjalan.
 
 ---
 
-### 👤 2. Naufal Husain (Backend & Containerization Specialist)
-* **Konsep Dasar: Apa itu "Minimal 2 Instance Application Server"?**
-  * Dosen **melarang** backend hanya dijalankan 1 proses saja. Jika hanya 1 proses dan server tersebut *crash*, seluruh website akan mati (*Single Point of Failure*).
-  * Maka, aplikasi backend Express.js dijalankan **sebanyak 2 kontainer kembar** (`backend-node-1` dan `backend-node-2`) yang aktif bersamaan di dalam **VM 2**.
-* **Berkas yang Dipelajari:**
-  * `backend/server.js`: Mengetahui endpoint `/api/health` yang mengembalikan nama kontainer (`served_by`) dan `/api/items` (CRUD).
-  * `backend/Dockerfile`: Perintah pengemasan aplikasi Node.js ke Docker image berbasis `node:20-alpine`.
-  * `backend/docker-compose.yml`: Skrip orkestrasi untuk menjalankan 2 instance backend:
-    ```yaml
-    services:
-      backend-1:
-        container_name: backend-node-1
-        ports: ["5001:5000"]
-        environment:
-          - APP_INSTANCE=backend-node-1
-          - DB_HOST=192.168.56.103
-      backend-2:
-        container_name: backend-node-2
-        ports: ["5002:5000"]
-        environment:
-          - APP_INSTANCE=backend-node-2
-          - DB_HOST=192.168.56.103
-    ```
-* **Perintah yang Dijalankan di VM 2:**
+## Panduan Teknis Per Lapisan
+
+### 1. Attala Alif Ramadhani Tri Hida (Cloud Infrastructure Lead)
+* Memasang Oracle VM VirtualBox di host Windows 11.
+* Mengaktifkan **Host-Only Network Adapter** dengan IP gateway `192.168.56.1` dan netmask `255.255.255.0`.
+* Menyiapkan 3 VM **Ubuntu Server 22.04 LTS** (`VM1-Frontend`, `VM2-Backend`, `VM3-Database`) dengan dua NIC per VM: Adapter 1 NAT (akses internet saat instalasi) dan Adapter 2 Host-Only (IP statis `.101`, `.102`, `.103` via Netplan).
+
+### 2. Tanji (Database & Frontend Deployment Specialist)
+* **Di VM3 (Database Server: `192.168.56.103`):**
+  Menjalankan container MySQL 8.0 menggunakan Docker Compose dengan named volume `lost_found_mysql_data` yang di-mount ke `/var/lib/mysql` agar data tabel `items` tidak hilang saat container dihapus atau dibuat ulang.
+  ```bash
+  cd database
+  docker compose up -d
+  docker ps
+  docker volume ls
+  ```
+* **Di VM1 (Frontend Server: `192.168.56.101`):**
+  Memastikan `frontend/.env` mengarah ke `VITE_API_URL=http://192.168.56.102/api`, menjalankan `npm run build` untuk menghasilkan `frontend/dist/`, menyalin isinya ke `/var/www/html/`, dan memasang `frontend/nginx.conf`.
+  ```bash
+  sudo apt install nginx -y
+  sudo cp -r frontend/dist/* /var/www/html/
+  sudo cp frontend/nginx.conf /etc/nginx/sites-available/default
+  sudo systemctl restart nginx
+  ```
+
+### 3. Naufal Husain (Backend & Containerization Specialist)
+* Mengemas API Express.js (`backend/server.js`) dengan `backend/Dockerfile` berbasis `node:20-alpine`, lalu menjalankan dua instance container (`backend-node-1` di port `5001:5000` dan `backend-node-2` di port `5002:5000`) melalui `backend/docker-compose.yml` di VM2 agar tidak ada *Single Point of Failure*.
   ```bash
   cd backend
-  docker compose up -d
-  docker ps   # Memastikan kedua kontainer Up di port 5001 dan 5002
+  docker compose up -d --build
+  docker ps
   ```
-* **Bukti Screenshot untuk Laporan:**
-  * Kode `backend/Dockerfile` dan `backend/docker-compose.yml`.
-  * Output terminal `docker ps` di VM 2 yang menampilkan 2 kontainer backend aktif.
 
----
-
-### 👤 3. Muhammad Naufal Widiatmoko (Load Balancer & Reverse Proxy Engineer)
-* **Konsep Dasar: Bagaimana Load Balancer & Failover Bekerja?**
-  * Karena ada 2 instance backend (port 5001 dan port 5002), Nginx dipasang di port 80 VM 2 sebagai gerbang utama.
-  * **Bagi Beban (Round-Robin):** Request ganjil dikirim ke kontainer 1, request genap dikirim ke kontainer 2.
-  * **Pengalihan Otomatis (Failover / High Availability):** Jika kontainer 1 mati, Nginx dalam hitungan milidetik langsung mengalihkan seluruh traffic ke kontainer 2 tanpa membuat website error.
-* **Berkas yang Dipelajari:**
-  * `backend/nginx-lb.conf`:
-    ```nginx
-    upstream backend_servers {
-        server 127.0.0.1:5001 max_fails=2 fail_timeout=5s;
-        server 127.0.0.1:5002 max_fails=2 fail_timeout=5s;
-    }
-    server {
-        listen 80 default_server;
-        location / {
-            proxy_pass http://backend_servers;
-            proxy_connect_timeout 2s;
-            proxy_next_upstream error timeout http_500 http_502 http_503;
-        }
-    }
-    ```
-* **Perintah yang Dijalankan di VM 2:**
+### 4. Muhammad Naufal Widiatmoko (Load Balancer & Reverse Proxy Engineer)
+* Memasang `backend/nginx-lb.conf` pada port `80` VM2 untuk membagi beban ke `127.0.0.1:5001` dan `127.0.0.1:5002` secara Round-Robin, dengan parameter failover `max_fails=2 fail_timeout=5s`, `proxy_connect_timeout 2s`, dan `proxy_next_upstream`. Header CORS ditangani langsung oleh middleware `cors()` di Express agar tidak muncul header duplikat.
   ```bash
   sudo apt install nginx -y
   sudo cp backend/nginx-lb.conf /etc/nginx/sites-available/default
-  sudo nginx -t                # Uji validitas konfigurasi
+  sudo nginx -t
   sudo systemctl restart nginx
   sudo systemctl status nginx
   ```
-* **Bukti Screenshot untuk Laporan:**
-  * File konfigurasi `nginx-lb.conf` bagian `upstream` dan `proxy_pass`.
-  * Output status `systemctl status nginx` berwarna hijau (*active/running*).
+
+### 5. Moh. Yoga Dwi Prasetyo (QA, Testing & Documentation Lead)
+1. **Uji CRUD & UI:** Membuka `http://192.168.56.101`, menambah laporan baru lewat modal `Buat Laporan Barang`, menyegarkan halaman untuk memastikan data persisten di MySQL VM3, serta menguji filter, `Tandai Selesai`, hapus inline, dan mode terang/gelap.
+2. **Uji Load Balancing Round-Robin:** Menjalankan loop request dari PowerShell host:
+   ```powershell
+   1..6 | ForEach-Object { (Invoke-RestMethod -Uri "http://192.168.56.102/api/health").served_by }
+   ```
+3. **Uji Chaos Failover:** Menghentikan `backend-node-1` (`docker stop backend-node-1`) di VM2, memverifikasi aplikasi web dan `/api/health` tetap merespons HTTP 200 melalui `backend-node-2`, lalu menyalakan kembali (`docker start backend-node-1`).
+4. **Dokumentasi:** Menyusun bukti tangkapan layar dan laporan akhir resmi ([LAPORAN_FINAL_PROJECT_CLOUD_COMPUTING.docx](LAPORAN_FINAL_PROJECT_CLOUD_COMPUTING.docx), Bab I sampai Bab VII) serta dek presentasi ([PRESENTASI_FINAL_PROJECT_CLOUD_COMPUTING.pptx](PRESENTASI_FINAL_PROJECT_CLOUD_COMPUTING.pptx)).
 
 ---
 
-### 👤 4. Tanji (Database & Frontend Deployment Specialist)
-* **Konsep Dasar: Mengapa Database Harus di VM Terpisah & Butuh Persistent Volume?**
-  * Sesuai ketentuan dosen: *"Deploy database pada VM yang berbeda sebagai container"*.
-  * Jika kontainer MySQL dimatikan atau di-restart, secara default data di dalamnya akan terhapus. Oleh karena itu, kita wajib menggunakan **Docker Persistent Volume** (`-v mysql_storage:/var/lib/mysql`) agar data laporan barang hilang tetap tersimpan aman di disk VM 3.
-* **Berkas yang Dipelajari:**
-  * `database/init.sql`: Berisi perintah pembuatan database `lost_found_db`, tabel `items`, dan 4 data contoh awal.
-  * `database/docker-compose.yml`: Konfigurasi kontainer MySQL 8 dengan volume storage persisten.
-  * `frontend/nginx.conf`: Konfigurasi web server Nginx di VM 1 untuk melayani file SPA React (`dist/`).
-* **Perintah yang Dijalankan:**
-  * **Di VM 3 (Database Server: `192.168.56.103`):**
-    ```bash
-    cd database
-    docker compose up -d
-    docker ps                      # Pastikan MySQL aktif di port 3306
-    docker volume ls               # Membuktikan volume lost_found_mysql_data ada
-    ```
-  * **Di VM 1 (Frontend Server: `192.168.56.101`):**
-    ```bash
-    sudo apt install nginx -y
-    # Copy folder frontend/dist hasil build ke /var/www/html
-    sudo cp -r frontend/dist/* /var/www/html/
-    sudo cp frontend/nginx.conf /etc/nginx/sites-available/default
-    sudo systemctl restart nginx
-    ```
-* **Bukti Screenshot untuk Laporan:**
-  * Output `docker ps` dan `docker volume ls` di VM 3.
-  * Hasil query SQL di terminal VM 3: `SELECT * FROM items;`.
-  * File konfigurasi `frontend/nginx.conf` di VM 1.
+## Panduan Menjalankan di Komputer Lokal (Tanpa VM)
 
----
+Untuk mencoba aplikasi secara lokal di laptop Windows (backend berjalan otomatis pada mode *in-memory fallback* jika MySQL tidak aktif):
 
-### 👤 5. Moh. Yoga Dwi Prasetyo (QA, Testing & Documentation Lead)
-* **Konsep Dasar: Pembuktian Ilmiah & Evaluasi Kriteria Dosen**
-  * Dosen membutuhkan bukti otentik bahwa sistem benar-benar bekerja, memiliki load balancing, dan tahan terhadap kegagalan (*fault tolerant*).
-* **Tanggung Jawab Pengujian & Dokumentasi:**
-  1. **Uji 1 (CRUD Fungsional):** Buka browser laptop host ke `http://192.168.56.101`, isi formulir laporan barang baru $\rightarrow$ pastikan muncul di layar dan masuk ke database di VM 3. Ambil screenshot.
-  2. **Uji 2 (Load Balancing Round-Robin):** Di terminal laptop host, jalankan perintah loop HTTP:
-     ```powershell
-     for ($i=1; $i -le 6; $i++) {
-         (Invoke-RestMethod -Uri "http://192.168.56.102/api/health").served_by
-     }
-     ```
-     Ambil screenshot output yang menunjukkan respons bergantian antara `backend-node-1` dan `backend-node-2`.
-  3. **Uji 3 (Failover / Chaos Test — Poin Nilai A ⭐):**
-     * Di terminal VM 2, matikan kontainer 1: `docker stop backend-node-1`.
-     * Refresh website di browser host $\rightarrow$ buktikan website **TIDAK ERROR** dan tetap berjalan normal karena otomatis ditangani oleh `backend-node-2`. Ambil screenshot.
-     * Nyalakan kembali: `docker start backend-node-1`.
-  4. Mengumpulkan seluruh screenshot ke dalam draf **Laporan Akhir Word/PDF** (Bab 1 Pendahuluan, Bab 2 Arsitektur, Bab 3 Konfigurasi, Bab 4 Pengujian, Bab 5 Kesimpulan) dan menyusun slide PowerPoint presentasi.
-
----
-
-## 💻 Panduan Menjalankan di Komputer Lokal (Uji Coba Cepat di Host)
-
-Sebelum dideploy ke VirtualBox, seluruh kodingan aplikasi ini sudah bisa dicoba langsung di laptop host:
-
-### 1. Menjalankan Backend API
-Buka Terminal / PowerShell 1:
+### 1. Jalankan Backend API
+Buka PowerShell 1:
 ```powershell
 cd backend
 npm install
 npm start
 ```
-* API Health Check: `http://localhost:5000/api/health`
-* Data Barang: `http://localhost:5000/api/items`
+* Health check: `http://localhost:5000/api/health`
+* Daftar items: `http://localhost:5000/api/items`
 
-### 2. Menjalankan Frontend SPA
-Buka Terminal / PowerShell 2:
+### 2. Jalankan Frontend SPA
+Buka PowerShell 2, lalu timpa sementara `VITE_API_URL` agar mengarah ke backend lokal (karena `frontend/.env` bawaan mengarah ke IP VM2 `192.168.56.102`):
 ```powershell
 cd frontend
 npm install
+$env:VITE_API_URL="http://localhost:5000/api"
 npm run dev
 ```
-* Buka browser di: **`http://localhost:3000`**
+* Buka browser ke `http://localhost:3000` (sesuai konfigurasi `frontend/vite.config.js`).
 
 ---
 
-## 📁 Struktur Direktori Repositori
+## Struktur Direktori Repositori
 
-```
+```text
 CC PAK FIRMAN/
-├── lost-and-found-docs/    # Dokumentasi lengkap proyek
-│   ├── design.md           # Topologi VirtualBox, ERD, dan spesifikasi API
-│   ├── tech-stack.md       # Rationale teknologi, spek hardware & alokasi RAM
-│   ├── features.md         # Fitur aplikasi & skenario uji live demo dosen
-│   └── plan.md             # Rencana kerja 5 fase & matriks RACI tim
-├── database/               # Komponen basis data (VM 3)
-│   ├── init.sql            # Script inisialisasi tabel items & seed data
-│   └── docker-compose.yml  # Docker compose MySQL + persistent volume
-├── backend/                # Komponen backend API & Load Balancer (VM 2)
-│   ├── server.js           # REST API Express + penanda node served_by
-│   ├── db.js               # Database abstraction & fallback
-│   ├── Dockerfile          # Image builder Node.js 20 Alpine
-│   ├── docker-compose.yml  # Multi-instance 2 container backend
-│   └── nginx-lb.conf       # Konfigurasi Nginx Load Balancer Round-Robin
-└── frontend/               # Komponen frontend SPA (VM 1)
-    ├── src/                # Komponen antarmuka React + Tailwind
-    ├── nginx.conf          # Konfigurasi Nginx untuk static SPA hosting
-    └── package.json        # Dependensi React, Vite, Lucide
-└── screenshots/            # Bukti dokumentasi resmi (Sesuai Rubrik Slide CC-01)
+├── LAPORAN_FINAL_PROJECT_CLOUD_COMPUTING.docx                # Laporan resmi akademik (Bab I - VII)
+├── PRESENTASI_FINAL_PROJECT_CLOUD_COMPUTING.pptx             # Slide presentasi final project (18 slide)
+├── LAPORAN_PANDUAN_LIVE_DEMO_CLOUD_COMPUTING.docx            # Panduan skenario live demo
+├── PANDUAN_TEKNIS_TAHAP_1_DAN_6_CLOUD_INFRASTRUCTURE_ATTALA.docx
+├── PANDUAN_TEKNIS_TAHAP_2_DATABASE_PERSISTENT_STORAGE_TANJI.docx
+├── PANDUAN_TEKNIS_TAHAP_3_BACKEND_CLUSTER_DOCKER.docx
+├── PANDUAN_TEKNIS_TAHAP_4_LOAD_BALANCER_ROUND_ROBIN_WIDIATMOKO.docx
+├── PANDUAN_TEKNIS_TAHAP_5_WEB_SPA_CRUD_DAN_CHAOS_FAILOVER_YOGA.docx
+├── lost-and-found-docs/       # Dokumentasi desain sistem
+│   ├── design.md              # Topologi VirtualBox, skema DB, dan kontrak REST API
+│   ├── tech-stack.md          # Pilihan teknologi dan alokasi resource VM
+│   ├── features.md            # Spesifikasi fitur aplikasi & skenario uji
+│   └── plan.md                # Rencana kerja dan pembagian tugas
+├── database/                  # Komponen basis data (VM3)
+│   ├── init.sql               # Skema tabel items dan data awal
+│   └── docker-compose.yml     # Container MySQL 8.0 + named volume
+├── backend/                   # Komponen REST API & Load Balancer (VM2)
+│   ├── server.js              # REST API Express + header X-Served-By
+│   ├── db.js                  # Koneksi MySQL + mode fallback lokal
+│   ├── Dockerfile             # Image Node.js 20 Alpine
+│   ├── docker-compose.yml     # Orkestrasi 2 container backend
+│   └── nginx-lb.conf          # Konfigurasi Nginx Round-Robin & failover
+├── frontend/                  # Komponen Frontend SPA (VM1)
+│   ├── src/                   # Kode sumber React + Tailwind CSS
+│   ├── dist/                  # Hasil build produksi siap deploy ke /var/www/html
+│   ├── nginx.conf             # Konfigurasi Nginx static SPA
+│   ├── vite.config.js         # Konfigurasi dev server (port 3000)
+│   └── package.json           # Dependensi frontend
+└── screenshots/               # Arsip bukti tangkapan layar per kategori
     ├── 01_Arsitektur_dan_Ketentuan/
     ├── 02_VM1_Frontend_SPA/
     ├── 03_VM2_Backend_Cluster_LoadBalancer/
     ├── 04_VM3_Database_Persistent_Storage/
     ├── 05_Pengujian_LoadBalancing_dan_Failover/
     └── 06_Arsip_Instalasi_VirtualBox/
+```
 
 ---
 
-## 📸 Panduan Bukti Dokumentasi & Laporan Akhir
+## Panduan Bukti Dokumentasi
 
-Seluruh tangkapan layar telah ditata ke dalam 6 subfolder di `screenshots/` sesuai bab laporan:
-* **01_Arsitektur_dan_Ketentuan:** Slide resmi ketentuan tugas dari dosen, Diagram Arsitektur 3-Tier, dan Diagram Topologi Multi-VM VirtualBox.
-* **02_VM1_Frontend_SPA:** Alamat IP statis VM 1 (`192.168.56.101`), status Nginx web server port 80, file bundle build SPA production, dan tampilan browser nyata portal Lost & Found (Beranda, formulir pelaporan, dan filter status).
-* **03_VM2_Backend_Cluster_LoadBalancer:** Alamat IP statis VM 2 (`192.168.56.102`), konfigurasi minimal 2 instance container backend, status `docker ps` (`backend-node-1` & `backend-node-2` berjalan aktif), dan konfigurasi Nginx Load Balancer upstream.
-* **04_VM3_Database_Persistent_Storage:** Alamat IP statis VM 3 (`192.168.56.103`), container MySQL 8.0 port 3306, bukti fisik Docker Named Volume `lost_found_mysql_data`, dan hasil query data barang dari database.
-* **05_Pengujian_LoadBalancing_dan_Failover:** Hasil uji ping konektivitas seluruh VM, uji distribusi beban Round-Robin (bergantian 50:50), uji ketahanan Failover saat salah satu node dimatikan paksa (0 downtime), dan uji pemulihan layanan.
-* **06_Arsip_Instalasi_VirtualBox:** Rekam jejak langkah awal wizard instalasi Ubuntu Server di VirtualBox.
+Folder `screenshots/` menyimpan bukti tangkapan layar yang dikelompokkan per lapisan sistem:
+* **01_Arsitektur_dan_Ketentuan:** Slide ketentuan tugas, diagram arsitektur 3-tier, dan topologi VirtualBox.
+* **02_VM1_Frontend_SPA:** IP statis VM1 (`192.168.56.101`), status Nginx port 80, berkas build SPA, dan tangkapan layar aplikasi.
+* **03_VM2_Backend_Cluster_LoadBalancer:** IP statis VM2 (`192.168.56.102`), konfigurasi `docker-compose.yml`, status `docker ps`, dan konfigurasi Nginx Load Balancer.
+* **04_VM3_Database_Persistent_Storage:** IP statis VM3 (`192.168.56.103`), container MySQL 8.0 port 3306, named volume `lost_found_mysql_data`, dan hasil query tabel `items`.
+* **05_Pengujian_LoadBalancing_dan_Failover:** Hasil `Test-Connection` ke 3 VM, uji Round-Robin 50:50, uji failover saat `backend-node-1` mati, dan uji pemulihan layanan.
+* **06_Arsip_Instalasi_VirtualBox:** Arsip instalasi Ubuntu Server di VirtualBox.
 
-Detail pemetaan gambar ke Bab Laporan dapat dilihat langsung pada berkas [**`screenshots/README.md`**](screenshots/README.md).
-
-```
+Pemetaan detail bukti tangkapan layar tersedia di [`screenshots/README.md`](screenshots/README.md).
